@@ -1,285 +1,270 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { 
-  School, 
-  MapPin, 
-  Calendar, 
-  FileText, 
-  TrendingUp, 
-  Users,
+import {
+  School,
+  MapPin,
+  Calendar,
+  TrendingUp,
   Building,
-  Filter
+  Star,
+  Ban,
 } from "lucide-react";
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  Tooltip,
+  ResponsiveContainer,
+  PieChart,
+  Pie,
+  Cell,
+  Legend,
+} from "recharts";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { useState } from "react";
+import useSWR from "swr";
+import axios from "axios";
 
+const fetcher = (url: string) => axios.get(url).then((res) => res.data);
 
 export default function Dashboard() {
-  // Mock data for demonstration - will be replaced with real data later
-  const stats = [
-    {
-      title: "No. of Sites",
-      value: "1,234",
-      icon: School,
-      change: "+12%",
-      changeType: "increase" as const,
-    },
-    {
-      title: "Provinces Covered",
-      value: "17",
-      icon: MapPin,
-      change: "+2",
-      changeType: "increase" as const,
-    },
-    {
-      title: "This Year",
-      value: "187",
-      icon: Calendar,
-      change: "+23%",
-      changeType: "increase" as const,
-    },
-    {
-      title: "MOU Documents",
-      value: "956",
-      icon: FileText,
-      change: "+8%",
-      changeType: "increase" as const,
-    },
-  ];
+  const { data, isLoading, error } = useSWR("/api/dashboard", fetcher);
 
-  const recentDeployments = [
-    {
-      id: 1,
-      schoolName: "SLC",
-      province: "LU",
-      type: "HS",
-      dateDeployed: "2024-05-15",
-      status: "completed"
-    },
-    {
-      id: 2,
-      schoolName: "DMMMSU",
-      province: "LU",
-      type: "College",
-      dateDeployed: "2024-05-14",
-      status: "completed"
-    },
-    {
-      id: 3,
-      schoolName: "SJBCNL",
-      province: "LU",
-      type: "College",
-      dateDeployed: "2024-05-13",
-      status: "pending"
-    },
-  ];
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 4;
+
+  if (isLoading) return <p>Loading...</p>;
+  if (error) return <p>Error loading data.</p>;
+  if (!data) return <p>No data available.</p>;
+
+  const paginatedDeployments = data.recentDeployments.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
+
+  function MunicipalitySection({ name }: { name: string }) {
+    const [open, setOpen] = useState(false);
+    const records = data.deployments[name] || [];
+
+    return (
+      <div className="border rounded-md bg-muted p-4">
+        <button
+          onClick={() => setOpen(!open)}
+          className="w-full text-left font-semibold text-primary hover:underline"
+        >
+          {name}
+        </button>
+        {open && (
+          <div className="mt-2 space-y-2">
+            {records.length > 0 ? (
+              records.map((inst: any, idx: number) => (
+                <div
+                  key={idx}
+                  className="border rounded bg-background p-3 text-sm space-y-1"
+                >
+                  <p><strong>Name:</strong> {inst.name}</p>
+                  <p><strong>Type:</strong> {inst.type}</p>
+                  <p><strong>Code:</strong> {inst.code}</p>
+                  <p><strong>Date:</strong> {inst.date}</p>
+                  <p><strong>STARBOOKS:</strong> {inst.starbooks}</p>
+                </div>
+              ))
+            ) : (
+              <p className="text-muted-foreground italic text-sm">
+                No deployment records.
+              </p>
+            )}
+          </div>
+        )}
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
-      {/* Header */}
       <div>
-        <h1 className="text-3xl font-bold text-foreground">Dashboard</h1>
-        <p className="text-muted-foreground">
-          Overview of STARTBOOKS deployment and monitoring system
-        </p>
+        <h1 className="text-3xl font-bold text-foreground">Region 1 Deployment Dashboard</h1>
       </div>
 
-      {/* Stats Cards */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        {stats.map((stat) => (
-          <Card key={stat.title} className="bg-white dark:bg-gray-900">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+        {data.stats.map((stat: any) => (
+          <Card key={stat.title} className="shadow-md">
+            <CardHeader className="flex flex-row items-center justify-between">
               <CardTitle className="text-sm font-medium text-muted-foreground">
                 {stat.title}
               </CardTitle>
-              <stat.icon className="h-4 w-4 text-muted-foreground" />
+              <stat.icon className="h-5 w-5 text-muted-foreground" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-foreground">{stat.value}</div>
-              <p className="text-xs text-muted-foreground">
-                <span className={`${stat.changeType === 'increase' ? 'text-green-600' : 'text-red-600'}`}>
-                  {stat.change}
-                </span>{' '}
-                from last month
-              </p>
+              <p className="text-xs text-muted-foreground">{stat.description}</p>
             </CardContent>
           </Card>
         ))}
       </div>
 
-      {/* Filters and Quick Actions */}
-      <Card className="bg-white dark:bg-gray-900">
+      <div className="grid gap-4 md:grid-cols-2">
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center space-x-2">
+              <TrendingUp className="h-5 w-5" />
+              <span>Deployment Trends (Monthly)</span>
+            </CardTitle>
+            <CardDescription>Deployments across Region 1 (2024)</CardDescription>
+          </CardHeader>
+          <CardContent className="h-[250px]">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={data.trends}>
+                <XAxis dataKey="month" />
+                <YAxis />
+                <Tooltip />
+                <Bar dataKey="count" fill="#4f46e5" radius={[4, 4, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Building className="h-5 w-5" />
+              Institution Type Distribution
+            </CardTitle>
+            <CardDescription>Breakdown of all deployed institution types</CardDescription>
+          </CardHeader>
+          <CardContent className="h-[300px]">
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie
+                  data={data.institutionDistribution}
+                  dataKey="value"
+                  nameKey="name"
+                  cx="50%"
+                  cy="50%"
+                  outerRadius={90}
+                  label
+                >
+                  {data.institutionDistribution.map((entry: any, index: number) => (
+                    <Cell key={`cell-${index}`} fill={data.colors[index % data.colors.length]} />
+                  ))}
+                </Pie>
+                <Tooltip />
+                <Legend />
+              </PieChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
+      </div>
+
+      <Card>
         <CardHeader>
           <CardTitle className="flex items-center space-x-2">
-            <Filter className="h-5 w-5" />
-            <span>Quick Filters</span>
+            <MapPin className="h-5 w-5" />
+            <span>Deployments by Province</span>
           </CardTitle>
           <CardDescription>
-            Filter deployments by province, institution type, or year
+            Click a province to view its municipalities and institution records.
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="flex flex-col space-y-4 sm:flex-row sm:space-y-0 sm:space-x-4">
-            <div className="flex-1">
-              <Input
-                placeholder="Search by school name..."
-                className="bg-background"
-              />
-            </div>
-            <Select>
-              <SelectTrigger className="w-full sm:w-[180px]">
-                <SelectValue placeholder="Region" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="Region 1">Region 1</SelectItem>
-                <SelectItem value="Region 2">Region 2</SelectItem>
-                <SelectItem value="Region 3">Region 3</SelectItem>
-                <SelectItem value="Region 4">Region 4</SelectItem>
-              </SelectContent>
-            </Select>
-            <Select>
-              <SelectTrigger className="w-full sm:w-[180px]">
-                <SelectValue placeholder="Province" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="La Union">La Union</SelectItem>
-                <SelectItem value="Ilocos NOrte">Ilocos NOrte</SelectItem>
-                <SelectItem value="Ilocos SUr">Ilocos SUr</SelectItem>
-                <SelectItem value="Pangasinan">Pangasinan</SelectItem>
-              </SelectContent>
-            </Select>
-            
-            <Select>
-              <SelectTrigger className="w-full sm:w-[180px]">
-                <SelectValue placeholder="Institution Type" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="Elementary">Elementary</SelectItem>
-                <SelectItem value="High School">High School</SelectItem>
-                <SelectItem value="College">College</SelectItem>
-                <SelectItem value="Private Institutions">Private Institutions</SelectItem>
-                <SelectItem value="NGAs">NGAs</SelectItem>
-              </SelectContent>
-            </Select>
-            <Select>
-              <SelectTrigger className="w-full sm:w-[180px]">
-                <SelectValue placeholder="Year" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="2024">2024</SelectItem>
-                <SelectItem value="2023">2023</SelectItem>
-                <SelectItem value="2022">2022</SelectItem>
-              </SelectContent>
-            </Select>
-            <Button>Apply Filters</Button>
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+            {Object.entries(data.municipalities).map(([province, municipalities]) => (
+              <Dialog key={province}>
+                <DialogTrigger asChild>
+                  <button className="p-4 border rounded-lg bg-muted w-full text-center hover:bg-muted/80 transition">
+                    <p className="text-sm text-muted-foreground">{province}</p>
+                    <p className="text-xl font-bold text-primary">{municipalities.length}</p>
+                  </button>
+                </DialogTrigger>
+                <DialogContent className="sm:max-w-4xl max-h-[80vh] overflow-y-auto">
+                  <DialogHeader>
+                    <DialogTitle>{province} – Municipalities</DialogTitle>
+                  </DialogHeader>
+                  <div className="space-y-4 mt-4">
+                    {municipalities.map((municipality: string) => (
+                      <MunicipalitySection key={municipality} name={municipality} />
+                    ))}
+                  </div>
+                </DialogContent>
+              </Dialog>
+            ))}
           </div>
         </CardContent>
       </Card>
 
-      {/* Recent Deployments */}
-      <Card className="bg-white dark:bg-gray-900">
+      <Card>
         <CardHeader>
-          <CardTitle className="flex items-center justify-between">
+          <CardTitle className="flex justify-between items-center">
             <span>Recent Deployments</span>
-            <Button variant="outline" size="sm">
-              View All
-            </Button>
+            <div className="space-x-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
+                disabled={currentPage === 1}
+              >
+                Previous
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setCurrentPage((p) => Math.min(p + 1, Math.ceil(data.recentDeployments.length / itemsPerPage)))}
+                disabled={currentPage === Math.ceil(data.recentDeployments.length / itemsPerPage)}
+              >
+                Next
+              </Button>
+            </div>
           </CardTitle>
-          <CardDescription>
-            Latest school deployments and their status
-          </CardDescription>
+          <CardDescription>Latest deployments within Region 1</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            {recentDeployments.map((deployment) => (
+            {paginatedDeployments.map((deployment: any) => (
               <div
                 key={deployment.id}
-                className="flex items-center justify-between p-4 border border-border rounded-lg bg-background"
+                className="flex items-center justify-between p-4 border rounded-lg"
               >
                 <div className="flex items-center space-x-4">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10">
+                  <div className="p-2 bg-muted rounded-full">
                     <School className="h-5 w-5 text-primary" />
                   </div>
                   <div>
-                    <h3 className="font-medium text-foreground">{deployment.schoolName}</h3>
-                    <div className="flex items-center space-x-2 text-sm text-muted-foreground">
-                      <MapPin className="h-3 w-3" />
-                      <span>{deployment.province}</span>
-                      <span>•</span>
-                      <span>{deployment.type}</span>
+                    <div className="font-medium text-foreground">{deployment.institutionName}</div>
+                    <div className="text-sm text-muted-foreground">
+                      {deployment.province} • {deployment.type} • {deployment.place}
+                    </div>
+                    <div className="text-xs text-muted-foreground">
+                      Code: {deployment.code} • STARBOOKS: {deployment.starbooks}
                     </div>
                   </div>
                 </div>
-                <div className="flex items-center space-x-4">
-                  <div className="text-right">
-                    <p className="text-sm font-medium text-foreground">
-                      {new Date(deployment.dateDeployed).toLocaleDateString()}
-                    </p>
-                    <Badge 
-                      variant={deployment.status === 'completed' ? 'default' : 'secondary'}
-                      className="mt-1"
-                    >
-                      {deployment.status}
-                    </Badge>
-                  </div>
+                <div className="text-right">
+                  <p className="text-sm text-foreground">
+                    {new Date(deployment.dateDeployed).toLocaleDateString()}
+                  </p>
+                  <Badge variant="secondary" className="mt-1">
+                    {deployment.status || ""}
+                  </Badge>
                 </div>
               </div>
             ))}
           </div>
         </CardContent>
       </Card>
-
-      {/* Province Distribution */}
-      <div className="grid gap-4 md:grid-cols-2">
-        <Card className="bg-white dark:bg-gray-900">
-          <CardHeader>
-            <CardTitle className="flex items-center space-x-2">
-              <TrendingUp className="h-5 w-5" />
-              <span>Deployment Trends</span>
-            </CardTitle>
-            <CardDescription>
-              Monthly deployment statistics
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="h-[200px] flex items-center justify-center text-muted-foreground">
-              Chart will be implemented with real data
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-white dark:bg-gray-900">
-          <CardHeader>
-            <CardTitle className="flex items-center space-x-2">
-              <Building className="h-5 w-5" />
-              <span>School Type Distribution</span>
-            </CardTitle>
-            <CardDescription>
-              Elementary vs Secondary schools
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-muted-foreground">Elementary</span>
-                <span className="text-sm font-medium">687 (56%)</span>
-              </div>
-              <div className="w-full bg-muted rounded-full h-2">
-                <div className="bg-primary h-2 rounded-full" style={{ width: '56%' }}></div>
-              </div>
-              
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-muted-foreground">Secondary</span>
-                <span className="text-sm font-medium">547 (44%)</span>
-              </div>
-              <div className="w-full bg-muted rounded-full h-2">
-                <div className="bg-secondary h-2 rounded-full" style={{ width: '44%' }}></div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
     </div>
   );
 }

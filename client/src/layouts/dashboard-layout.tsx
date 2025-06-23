@@ -5,44 +5,37 @@ import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import {
   LayoutDashboard,
-  School,
-  Search,
   FileText,
   Bell,
   Upload,
   Menu,
-  BookOpen,
 } from "lucide-react";
 
 const navigation = [
-  {
+ {
     name: "Dashboard",
     href: "/",
     icon: LayoutDashboard,
-  },
-  {
-    name: "Add School",
-    href: "/add-school",
-    icon: School,
-  },
-  {
-    name: "Search",
-    href: "/search",
-    icon: Search,
   },
   {
     name: "Reports",
     href: "/reports",
     icon: FileText,
   },
+   
   {
     name: "MOU Documents",
     href: "/mou",
     icon: Upload,
   },
   {
-    name: "Notifications",
+    name: "Send Notifications",
     href: "/notifications",
+    icon: Bell,
+  },
+  {
+    name: "Trainings",
+    href: "/trainings",
     icon: Bell,
   },
 ];
@@ -61,7 +54,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
         <div className="flex items-center space-x-2">
         <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQh7MA0grRFPZDHYotT3FQ8wntj3eV0tH6ma_6r1RqJeKWjMaauVrVCQkNq6S2pu-O1-C4&usqp=CAU" className="h-12 w-12 text-primary" />
           <div>
-            <h1 className="text-lg font-bold text-foreground">STARTBOOKS</h1>
+            <h1 className="text-sm font-bold text-foreground">STARBOOKS Region 1</h1>
             <p className="text-xs text-muted-foreground">Monitoring System</p>
           </div>
         </div>

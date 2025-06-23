@@ -11,6 +11,7 @@ import Reports from "@/pages/reports";
 import MOU from "@/pages/mou";
 import Notifications from "@/pages/notifications";
 import NotFound from "@/pages/not-found";
+import Trainings from "@/pages/trainings";
 
 function Router() {
   return (
@@ -22,7 +23,9 @@ function Router() {
         <Route path="/reports" component={Reports} />
         <Route path="/mou" component={MOU} />
         <Route path="/notifications" component={Notifications} />
+        <Route path="/trainings" component={Trainings} />
         <Route component={NotFound} />
+        
       </Switch>
     </DashboardLayout>
   );
